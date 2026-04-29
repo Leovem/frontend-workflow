@@ -1,0 +1,187 @@
+<div class="h-full min-h-0 flex flex-col overflow-hidden bg-white">
+  <!-- Header -->
+  <div class="px-3 py-2 border-b border-slate-200 shrink-0 bg-slate-50">
+    <h3 class="text-[11px] font-semibold text-slate-700 tracking-[0.12em] uppercase">
+      Paleta
+    </h3>
+  </div>
+
+  <!-- Body -->
+  <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-2 py-2 space-y-2">
+    <!-- CONEXIÓN -->
+    <section class="border border-slate-200 rounded-md overflow-hidden bg-white">
+      <button
+        type="button"
+        (click)="toggleSection('conexion')"
+        class="w-full flex items-center justify-between px-2.5 py-2 bg-slate-100 hover:bg-slate-200 transition text-left"
+      >
+        <span class="text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+          Conexión
+        </span>
+
+        <span
+          class="text-[10px] text-slate-500 transition-transform duration-200"
+          [class.rotate-90]="!sections.conexion"
+        >
+          ▶
+        </span>
+      </button>
+
+      <div
+        *ngIf="sections.conexion"
+        class="max-h-40 overflow-y-auto overscroll-contain p-1.5 space-y-0.5"
+      >
+        <button
+          type="button"
+          (click)="selectNode('link')"
+          class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-slate-100 transition text-left"
+        >
+          <span class="w-5 h-5 flex items-center justify-center text-xs font-bold text-slate-700 shrink-0">→</span>
+          <span class="text-xs text-slate-800 truncate">Flujo de control</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- BÁSICOS -->
+    <section class="border border-slate-200 rounded-md overflow-hidden bg-white">
+      <button
+        type="button"
+        (click)="toggleSection('basicos')"
+        class="w-full flex items-center justify-between px-2.5 py-2 bg-slate-100 hover:bg-slate-200 transition text-left"
+      >
+        <span class="text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+          Básicos
+        </span>
+
+        <span
+          class="text-[10px] text-slate-500 transition-transform duration-200"
+          [class.rotate-90]="!sections.basicos"
+        >
+          ▶
+        </span>
+      </button>
+
+
+      <div
+        *ngIf="sections.basicos"
+        class="max-h-48 overflow-y-auto overscroll-contain p-1.5 space-y-0.5"
+      >
+        <button
+          type="button"
+          draggable="true"
+          (dragstart)="onDragStart($event, 'initial')"
+          (click)="selectNode('initial')"
+          class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-slate-100 transition text-left"
+        >
+          <span class="w-5 h-5 flex items-center justify-center text-xs font-bold text-slate-700 shrink-0">●</span>
+          <span class="text-xs text-slate-800 truncate">Nodo inicial</span>
+        </button>
+
+        <button
+          type="button"
+          draggable="true"
+          (dragstart)="onDragStart($event, 'action')"
+          (click)="selectNode('action')"
+          class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-slate-100 transition text-left"
+        >
+          <span class="w-5 h-5 flex items-center justify-center text-xs font-bold text-slate-700 shrink-0">▭</span>
+          <span class="text-xs text-slate-800 truncate">Acción</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- CONTROL -->
+    <section class="border border-slate-200 rounded-md overflow-hidden bg-white">
+      <button
+        type="button"
+        (click)="toggleSection('control')"
+        class="w-full flex items-center justify-between px-2.5 py-2 bg-slate-100 hover:bg-slate-200 transition text-left"
+      >
+        <span class="text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+          Control
+        </span>
+
+        <span
+          class="text-[10px] text-slate-500 transition-transform duration-200"
+          [class.rotate-90]="!sections.control"
+        >
+          ▶
+        </span>
+      </button>
+
+      <div
+        *ngIf="sections.control"
+        class="max-h-48 overflow-y-auto overscroll-contain p-1.5 space-y-0.5"
+      >
+        <button
+          type="button"
+          draggable="true"
+          (dragstart)="onDragStart($event, 'decision')"
+          (click)="selectNode('decision')"
+          class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-slate-100 transition text-left"
+        >
+          <span class="w-5 h-5 flex items-center justify-center text-xs font-bold text-slate-700 shrink-0">◇</span>
+          <span class="text-xs text-slate-800 truncate">Decisión</span>
+        </button>
+
+        <button
+          type="button"
+          draggable="true"
+          (dragstart)="onDragStart($event, 'sync')"
+          (click)="selectNode('sync')"
+          class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-slate-100 transition text-left"
+        >
+          <span class="w-5 h-5 flex items-center justify-center text-xs font-bold text-slate-700 shrink-0">▬</span>
+          <span class="text-xs text-slate-800 truncate">Fork / Join</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- FINAL -->
+    <section class="border border-slate-200 rounded-md overflow-hidden bg-white">
+      <button
+        type="button"
+        (click)="toggleSection('final')"
+        class="w-full flex items-center justify-between px-2.5 py-2 bg-slate-100 hover:bg-slate-200 transition text-left"
+      >
+        <span class="text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+          Final
+        </span>
+
+        <span
+          class="text-[10px] text-slate-500 transition-transform duration-200"
+          [class.rotate-90]="!sections.final"
+        >
+          ▶
+        </span>
+      </button>
+
+      <div
+        *ngIf="sections.final"
+        class="max-h-48 overflow-y-auto overscroll-contain p-1.5 space-y-0.5"
+      >
+        <button
+          type="button"
+          draggable="true"
+          (dragstart)="onDragStart($event, 'activityFinal')"
+          (click)="selectNode('activityFinal')"
+          class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-slate-100 transition text-left"
+        >
+          <span class="w-5 h-5 flex items-center justify-center text-xs font-bold text-slate-700 shrink-0">◉</span>
+          <span class="text-xs text-slate-800 truncate">Fin actividad</span>
+        </button>
+
+        <button
+          type="button"
+          draggable="true"
+          (dragstart)="onDragStart($event, 'flowFinal')"
+          (click)="selectNode('flowFinal')"
+          class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-slate-100 transition text-left"
+        >
+          <span class="w-5 h-5 flex items-center justify-center text-xs font-bold text-slate-700 shrink-0">⊗</span>
+          <span class="text-xs text-slate-800 truncate">Fin flujo</span>
+        </button>
+      </div>
+    </section>
+  </div>
+</div>

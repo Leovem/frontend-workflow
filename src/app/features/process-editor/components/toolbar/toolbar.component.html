@@ -1,0 +1,42 @@
+<div class="w-full h-12 bg-white border border-slate-200 rounded-2xl px-4 flex items-center justify-between gap-3 shadow-sm">
+  <!-- Título -->
+  <div class="min-w-0">
+    <h1 class="text-sm font-semibold text-slate-800 truncate">
+      {{ processName }}
+    </h1>
+    <p class="text-[10px] text-slate-500 leading-none mt-0.5">
+      {{ lastSaved }}
+    </p>
+  </div>
+
+  <!-- Acciones -->
+  <div class="flex items-center gap-1.5 shrink-0">
+    <button
+      type="button"
+      (click)="generateAI.emit()"
+      class="h-8 px-3 rounded-lg bg-slate-900 text-white text-xs font-medium hover:bg-slate-800 transition">
+      IA
+    </button>
+
+    <button
+      type="button"
+      (click)="save.emit()"
+      class="h-8 px-3 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition">
+      Guardar
+    </button>
+
+    <button
+      type="button"
+      (click)="clear.emit()"
+      class="h-8 px-3 rounded-lg bg-rose-600 text-white text-xs font-medium hover:bg-rose-700 transition">
+      Limpiar
+    </button>
+
+    <button
+      type="button"
+      (click)="validate.emit()"
+      class="h-8 px-3 rounded-lg bg-amber-500 text-white text-xs font-medium hover:bg-amber-600 transition">
+      Validar
+    </button>
+  </div>
+</div>

@@ -1,0 +1,191 @@
+<div class="space-y-6">
+  <!-- HEADER -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <h2 class="text-2xl font-black text-slate-800 tracking-tight">
+          {{ isAdmin ? 'Proyectos de Workflow' : 'Mis Diagramas' }}
+        </h2>
+
+        <span
+          class="text-[10px] font-black px-2 py-1 rounded-full uppercase"
+          [ngClass]="isAdmin ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500'">
+          {{ isAdmin ? 'Administrador' : 'Usuario' }}
+        </span>
+      </div>
+
+      <p class="text-sm text-slate-500 mt-1">
+        {{
+          isAdmin
+            ? 'Crea, administra y abre diagramas colaborativos.'
+            : 'Abre tus diagramas asignados o entra a uno nuevo mediante código.'
+        }}
+      </p>
+    </div>
+
+    <button
+      *ngIf="isAdmin"
+      type="button"
+      (click)="createProject()"
+      [disabled]="creating"
+      class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white px-5 py-3 rounded-xl text-sm font-bold shadow-sm transition">
+      {{ creating ? 'Creando...' : '+ Nuevo Proyecto' }}
+    </button>
+  </div>
+
+  <!-- MENSAJES -->
+  <div
+    *ngIf="errorMessage"
+    class="bg-red-50 border border-red-100 text-red-600 rounded-xl px-4 py-3 text-sm font-bold">
+    {{ errorMessage }}
+  </div>
+
+  <div
+    *ngIf="successMessage"
+    class="bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl px-4 py-3 text-sm font-bold">
+    {{ successMessage }}
+  </div>
+
+  <!-- ENTRAR POR CÓDIGO -->
+  <section class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+    <div class="flex flex-col md:flex-row md:items-start gap-4">
+      <div class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H3v-4l6.257-6.257A6 6 0 1121 9z" />
+        </svg>
+      </div>
+
+      <div class="flex-1">
+        <h3 class="font-black text-slate-800 mb-1">
+          Entrar a un diagrama con código
+        </h3>
+
+        <p class="text-sm text-slate-500 mb-4">
+          Ingresa el código compartido por el administrador para unirte al proyecto colaborativo.
+        </p>
+
+        <div class="flex flex-col md:flex-row gap-3">
+          <input
+            [(ngModel)]="accessCode"
+            placeholder="Ejemplo: WF-AB-1234"
+            class="border border-slate-200 rounded-xl px-4 py-3 w-full text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 uppercase font-mono" />
+
+          <button
+            type="button"
+            (click)="joinProject()"
+            [disabled]="joining || !accessCode.trim()"
+            class="bg-slate-900 hover:bg-black disabled:opacity-60 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl text-sm font-bold transition whitespace-nowrap">
+            {{ joining ? 'Entrando...' : 'Entrar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LISTA -->
+  <section>
+    <div class="flex items-center justify-between mb-3">
+      <div>
+        <h3 class="font-black text-slate-800">
+          {{ isAdmin ? 'Proyectos disponibles' : 'Mis diagramas asignados' }}
+        </h3>
+
+        <p class="text-xs text-slate-400 mt-1">
+          {{ projects.length }} {{ projects.length === 1 ? 'proyecto' : 'proyectos' }}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        (click)="loadProjects()"
+        [disabled]="loading"
+        class="text-xs font-bold text-blue-600 hover:text-blue-700 disabled:opacity-50 uppercase tracking-widest">
+        {{ loading ? 'Cargando...' : 'Actualizar' }}
+      </button>
+    </div>
+
+    <!-- LOADING -->
+    <div
+      *ngIf="loading"
+      class="bg-white border border-slate-200 rounded-2xl p-8 text-center text-slate-500">
+      Cargando proyectos...
+    </div>
+
+    <!-- EMPTY -->
+    <div
+      *ngIf="!loading && projects.length === 0"
+      class="bg-white border border-dashed border-slate-300 rounded-2xl p-8 text-center">
+      <div class="mx-auto w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mb-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h8M9 17H7a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v2M9 17h10a2 2 0 002-2v-3a2 2 0 00-2-2h-8" />
+        </svg>
+      </div>
+
+      <p class="font-bold text-slate-700">
+        {{ isAdmin ? 'Aún no existen proyectos.' : 'Aún no tienes diagramas asignados.' }}
+      </p>
+
+      <p class="text-sm text-slate-500 mt-1">
+        {{
+          isAdmin
+            ? 'Crea uno nuevo para comenzar a diseñar workflows.'
+            : 'Pide un código al administrador para unirte a un diagrama.'
+        }}
+      </p>
+    </div>
+
+    <!-- CARDS -->
+    <div
+      *ngIf="!loading && projects.length > 0"
+      class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <article
+        *ngFor="let project of projects; trackBy: trackByProjectId"
+        class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <h4 class="font-black text-slate-800 text-lg leading-tight truncate">
+              {{ project.name }}
+            </h4>
+
+            <p class="text-sm text-slate-500 mt-1 line-clamp-2">
+              {{ project.description || 'Sin descripción' }}
+            </p>
+          </div>
+
+          <span
+            class="text-[10px] font-black px-2 py-1 rounded-full uppercase shrink-0"
+            [ngClass]="{
+              'bg-blue-50 text-blue-600': project.status === 'DRAFT',
+              'bg-emerald-50 text-emerald-600': project.status === 'ACTIVE',
+              'bg-slate-100 text-slate-500': project.status === 'ARCHIVED'
+            }">
+            {{ project.status }}
+          </span>
+        </div>
+
+        <div class="mt-4 rounded-xl bg-slate-50 border border-slate-100 p-3">
+          <p class="text-[10px] uppercase tracking-widest font-black text-slate-400">
+            Código de acceso
+          </p>
+
+          <div class="flex items-center justify-between gap-2 mt-1">
+            <p class="font-mono font-black text-blue-600 truncate">
+              {{ project.accessCode }}
+            </p>
+
+            <span class="text-[10px] font-bold text-slate-400">
+              {{ project.memberUserIds.length }} usuarios
+            </span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          (click)="openProject(project.id)"
+          class="mt-4 w-full bg-slate-900 hover:bg-black text-white py-3 rounded-xl text-sm font-bold transition">
+          Abrir Editor
+        </button>
+      </article>
+    </div>
+  </section>
+</div>

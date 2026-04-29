@@ -1,0 +1,372 @@
+<div class="h-full min-h-0 bg-slate-50 flex flex-col overflow-hidden">
+
+    <!-- Header -->
+    <div class="shrink-0 px-6 py-5 border-b border-slate-200 bg-white">
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <h1 class="text-xl font-black text-slate-800 tracking-tight">
+                    Bandeja de tareas
+                </h1>
+
+                <p class="text-sm text-slate-500 mt-1">
+                    Consulta y atiende las tareas asignadas a un departamento.
+                </p>
+            </div>
+
+            <button type="button" (click)="refresh()" [disabled]="loading"
+                class="h-10 px-4 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition">
+                {{ loading ? 'Cargando...' : 'Actualizar' }}
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="shrink-0 px-6 py-4 bg-slate-50 border-b border-slate-200">
+        <div class="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3">
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">
+                    Departamento
+                </label>
+
+                <input type="text" [(ngModel)]="departmentId"
+                    class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                    placeholder="Ej: dep_recepcion" />
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">
+                    Usuario funcionario
+                </label>
+
+                <input type="text" [(ngModel)]="userId"
+                    class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                    placeholder="Ej: user_test_001" />
+            </div>
+
+            <div class="flex items-end">
+                <button type="button" (click)="loadTasks()" [disabled]="loading"
+                    class="w-full md:w-auto h-10 px-5 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed transition">
+                    Buscar tareas
+                </button>
+            </div>
+        </div>
+
+        <div *ngIf="errorMessage"
+            class="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            {{ errorMessage }}
+        </div>
+
+        <div *ngIf="successMessage"
+            class="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+            {{ successMessage }}
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="shrink-0 px-6 py-4 bg-white border-b border-slate-200">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3">
+                <div class="text-xs font-semibold text-rose-600">
+                    Recién llegadas
+                </div>
+                <div class="text-2xl font-black text-rose-700 mt-1">
+                    {{ newTasks.length }}
+                </div>
+            </div>
+
+            <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+                <div class="text-xs font-semibold text-amber-600">
+                    En proceso
+                </div>
+                <div class="text-2xl font-black text-amber-700 mt-1">
+                    {{ inProgressTasks.length }}
+                </div>
+            </div>
+
+            <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                <div class="text-xs font-semibold text-emerald-600">
+                    Terminadas
+                </div>
+                <div class="text-2xl font-black text-emerald-700 mt-1">
+                    {{ completedTasks.length }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 min-h-0 overflow-y-auto px-6 py-5">
+
+        <div *ngIf="loading" class="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-700">
+            Cargando tareas...
+        </div>
+
+        <div *ngIf="!loading && !hasTasks"
+            class="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
+            <div class="text-sm font-bold text-slate-700">
+                No hay tareas para mostrar
+            </div>
+
+            <p class="text-sm text-slate-500 mt-1">
+                Ingresa un departamento y presiona “Buscar tareas”.
+            </p>
+        </div>
+
+        <div *ngIf="!loading && hasTasks" class="space-y-6">
+
+            <!-- Nuevas -->
+            <section>
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-black text-slate-800">
+                        Tareas recién llegadas
+                    </h2>
+
+                    <span class="text-xs text-slate-400">
+                        {{ newTasks.length }} tareas
+                    </span>
+                </div>
+
+                <div class="space-y-3">
+                    <article *ngFor="let task of newTasks; trackBy: trackTaskById"
+                        class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="px-2 py-1 rounded-full border text-[11px] font-bold"
+                                        [ngClass]="getTaskStatusClasses(task.status)">
+                                        {{ getTaskStatusLabel(task.status) }}
+                                    </span>
+
+                                    <span class="text-[11px] text-slate-400 break-all">
+                                        {{ task.id }}
+                                    </span>
+                                </div>
+
+                                <h3 class="text-sm font-bold text-slate-800 mt-2">
+                                    {{ task.nodeLabel || 'Actividad sin nombre' }}
+                                </h3>
+
+                                <p class="text-xs text-slate-500 mt-1">
+                                    Instancia: {{ task.instanceId }}
+                                </p>
+
+                                <p class="text-xs text-slate-500 mt-1">
+                                    Formulario: {{ task.formId || 'Sin formulario' }}
+                                </p>
+                            </div>
+
+                            <button type="button" (click)="claimTask(task)" [disabled]="claimingTaskId === task.id"
+                                class="h-9 px-3 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed transition shrink-0">
+                                {{ claimingTaskId === task.id ? 'Tomando...' : 'Tomar tarea' }}
+                            </button>
+                        </div>
+                    </article>
+
+                    <div *ngIf="newTasks.length === 0"
+                        class="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
+                        No hay tareas recién llegadas.
+                    </div>
+                </div>
+            </section>
+
+            <!-- En proceso -->
+            <section>
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-black text-slate-800">
+                        Tareas en proceso
+                    </h2>
+
+                    <span class="text-xs text-slate-400">
+                        {{ inProgressTasks.length }} tareas
+                    </span>
+                </div>
+
+                <div class="space-y-3">
+                    <article *ngFor="let task of inProgressTasks; trackBy: trackTaskById"
+                        class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="px-2 py-1 rounded-full border text-[11px] font-bold"
+                                        [ngClass]="getTaskStatusClasses(task.status)">
+                                        {{ getTaskStatusLabel(task.status) }}
+                                    </span>
+
+                                    <span class="text-[11px] text-slate-400 break-all">
+                                        {{ task.id }}
+                                    </span>
+                                </div>
+
+                                <h3 class="text-sm font-bold text-slate-800 mt-2">
+                                    {{ task.nodeLabel || 'Actividad sin nombre' }}
+                                </h3>
+
+                                <p class="text-xs text-slate-500 mt-1">
+                                    Asignada a: {{ task.assignedUserId || 'Sin asignar' }}
+                                </p>
+
+                                <p class="text-xs text-slate-500 mt-1">
+                                    Formulario: {{ task.formId || 'Sin formulario' }}
+                                </p>
+                            </div>
+
+                            <button type="button" (click)="openTaskForm(task)" [disabled]="!task.formId"
+                                class="h-9 px-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-700 text-xs font-semibold hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed shrink-0">
+                                Abrir formulario
+                            </button>
+                        </div>
+                    </article>
+
+                    <div *ngIf="inProgressTasks.length === 0"
+                        class="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
+                        No hay tareas en proceso.
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Modal para atender tarea -->
+    <div *ngIf="showTaskFormPanel"
+        class="fixed inset-0 z-50 bg-slate-900/30 backdrop-blur-sm flex items-center justify-center p-4">
+
+        <section
+            class="w-full max-w-2xl max-h-[90vh] rounded-3xl bg-white border border-slate-200 shadow-2xl overflow-hidden flex flex-col">
+
+            <!-- Modal header -->
+            <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <h2 class="text-base font-black text-slate-800">
+                        Atender tarea
+                    </h2>
+
+                    <p class="text-xs text-slate-500 mt-1">
+                        {{ selectedTask?.nodeLabel || 'Actividad' }}
+                    </p>
+
+                    <p *ngIf="selectedTask" class="text-[11px] text-slate-400 mt-1 break-all">
+                        Tarea: {{ selectedTask.id }}
+                    </p>
+                </div>
+
+                <button type="button" (click)="closeTaskFormPanel()"
+                    class="w-9 h-9 rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 transition shrink-0">
+                    ×
+                </button>
+            </div>
+
+            <!-- Modal body -->
+            <div class="flex-1 min-h-0 overflow-y-auto p-5">
+
+                <div *ngIf="taskFormLoading"
+                    class="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-700">
+                    Cargando formulario...
+                </div>
+
+                <div *ngIf="!taskFormLoading && !selectedTaskForm"
+                    class="rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-700">
+                    No se pudo cargar el formulario de esta tarea.
+                </div>
+
+                <ng-container *ngIf="!taskFormLoading && selectedTaskForm">
+                    <div class="mb-5">
+                        <h3 class="text-lg font-black text-slate-800">
+                            {{ selectedTaskForm.title }}
+                        </h3>
+
+                        <p *ngIf="selectedTaskForm.description" class="text-sm text-slate-500 mt-1 leading-relaxed">
+                            {{ selectedTaskForm.description }}
+                        </p>
+
+                        <div class="mt-2 text-[11px] text-slate-400 break-all">
+                            Formulario: {{ selectedTaskForm.id }}
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div *ngFor="let field of selectedTaskForm.fields" class="space-y-1.5">
+
+                            <label class="block text-xs font-bold text-slate-600">
+                                {{ field.label }}
+                                <span *ngIf="field.required" class="text-rose-500">*</span>
+                            </label>
+
+                            <!-- text / number / date -->
+                            <input *ngIf="field.type === 'text' || field.type === 'number' || field.type === 'date'"
+                                [type]="field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'"
+                                [value]="taskFormValues[field.id] || ''" (input)="onDynamicFieldInput(field.id, $event)"
+                                class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                [placeholder]="field.placeholder || ''" />
+
+                            <!-- textarea -->
+                            <textarea *ngIf="field.type === 'textarea'" rows="4"
+                                [value]="taskFormValues[field.id] || ''" (input)="onDynamicFieldInput(field.id, $event)"
+                                class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none resize-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                [placeholder]="field.placeholder || ''">
+              </textarea>
+
+                            <!-- select -->
+                            <select *ngIf="field.type === 'select'" [value]="taskFormValues[field.id] || ''"
+                                (change)="onDynamicFieldInput(field.id, $event)"
+                                class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                                <option value="">Seleccione una opción</option>
+                                <option *ngFor="let option of field.options" [value]="option">
+                                    {{ option }}
+                                </option>
+                            </select>
+
+                            <!-- checkbox -->
+                            <label *ngIf="field.type === 'checkbox'"
+                                class="h-10 rounded-xl border border-slate-200 bg-white px-3 flex items-center gap-2 text-sm text-slate-700">
+                                <input type="checkbox" [checked]="!!taskFormValues[field.id]"
+                                    (change)="onDynamicCheckboxChange(field.id, $event)"
+                                    class="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                                Marcar
+                            </label>
+
+                            <!-- file / image temporal -->
+                            <input *ngIf="field.type === 'file' || field.type === 'image'" type="text"
+                                [value]="taskFormValues[field.id] || ''" (input)="onDynamicFieldInput(field.id, $event)"
+                                class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                placeholder="URL o referencia del archivo cargado" />
+
+                            <p *ngIf="field.placeholder" class="text-[11px] text-slate-400">
+                                {{ field.placeholder }}
+                            </p>
+                        </div>
+                    </div>
+                </ng-container>
+            </div>
+
+            <!-- Modal footer -->
+            <div
+                class="shrink-0 border-t border-slate-200 bg-white p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+
+                <div class="text-[11px] text-slate-400 leading-relaxed">
+                    Puedes guardar la respuesta sin finalizar, o completar la tarea para avanzar el workflow.
+                </div>
+
+                <div class="flex items-center justify-end gap-2">
+                    <button type="button" (click)="closeTaskFormPanel()"
+                        [disabled]="taskFormSaving || completingTaskId === selectedTask?.id"
+                        class="h-10 px-4 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition">
+                        Cancelar
+                    </button>
+
+                    <button type="button" (click)="saveTaskFormSubmission()"
+                        [disabled]="taskFormSaving || taskFormLoading || !selectedTaskForm || completingTaskId === selectedTask?.id"
+                        class="h-10 px-4 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition">
+                        {{ taskFormSaving && completingTaskId !== selectedTask?.id ? 'Guardando...' : 'Guardar
+                        respuesta' }}
+                    </button>
+
+                    <button type="button" (click)="saveSubmissionAndCompleteTask()"
+                        [disabled]="taskFormSaving || taskFormLoading || !selectedTaskForm || completingTaskId === selectedTask?.id"
+                        class="h-10 px-4 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition">
+                        {{ completingTaskId === selectedTask?.id ? 'Completando...' : 'Completar tarea' }}
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>

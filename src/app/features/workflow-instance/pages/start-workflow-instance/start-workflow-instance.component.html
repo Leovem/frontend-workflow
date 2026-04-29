@@ -1,0 +1,291 @@
+<div class="h-full min-h-0 bg-slate-50 flex flex-col overflow-hidden">
+
+  <!-- Header -->
+  <div class="shrink-0 px-6 py-5 border-b border-slate-200 bg-white">
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+      <div>
+        <h1 class="text-xl font-black text-slate-800 tracking-tight">
+          Iniciar trámite
+        </h1>
+
+        <p class="text-sm text-slate-500 mt-1">
+          Crea una instancia real desde una versión publicada del workflow.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a
+          routerLink="/tasks"
+          class="h-10 px-4 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 transition flex items-center">
+          Ir a Bandeja
+        </a>
+
+        <a
+          routerLink="/monitor"
+          class="h-10 px-4 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 transition flex items-center">
+          Ir a Monitor
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="flex-1 min-h-0 overflow-y-auto px-6 py-6">
+    <div class="max-w-5xl mx-auto grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-5">
+
+      <!-- Form -->
+      <section class="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-200 bg-slate-50">
+          <h2 class="text-sm font-black text-slate-800">
+            Datos del trámite
+          </h2>
+
+          <p class="text-xs text-slate-500 mt-1">
+            Usa los IDs reales del proceso y de la versión publicada.
+          </p>
+        </div>
+
+        <div class="p-5 space-y-5">
+
+          <!-- IDs -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1">
+                Process ID
+              </label>
+
+              <input
+                type="text"
+                [(ngModel)]="processId"
+                class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                placeholder="Ej: 69ef..."
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1">
+                Process Version ID publicado
+              </label>
+
+              <input
+                type="text"
+                [(ngModel)]="processVersionId"
+                class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                placeholder="Ej: 69ef..."
+              />
+            </div>
+          </div>
+
+          <!-- Title -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 mb-1">
+              Título del trámite
+            </label>
+
+            <input
+              type="text"
+              [(ngModel)]="title"
+              class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+              placeholder="Ej: Solicitud de licencia de funcionamiento"
+            />
+          </div>
+
+          <!-- Initial data -->
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-4">
+            <div>
+              <h3 class="text-xs font-black text-slate-700 uppercase tracking-wide">
+                Datos iniciales opcionales
+              </h3>
+
+              <p class="text-xs text-slate-500 mt-1">
+                Estos datos se guardan como información inicial de la instancia.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">
+                  Solicitante
+                </label>
+
+                <input
+                  type="text"
+                  [(ngModel)]="applicantName"
+                  class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                  placeholder="Nombre del solicitante"
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">
+                  Tipo de solicitud
+                </label>
+
+                <input
+                  type="text"
+                  [(ngModel)]="requestType"
+                  class="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                  placeholder="Ej: Nueva, Renovación, Reclamo"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1">
+                Observaciones iniciales
+              </label>
+
+              <textarea
+                rows="4"
+                [(ngModel)]="notes"
+                class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none resize-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                placeholder="Notas iniciales del trámite...">
+              </textarea>
+            </div>
+          </div>
+
+          <!-- Messages -->
+          <div
+            *ngIf="errorMessage"
+            class="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            {{ errorMessage }}
+          </div>
+
+          <div
+            *ngIf="successMessage"
+            class="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+            {{ successMessage }}
+          </div>
+
+          <!-- Actions -->
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 pt-2">
+            <button
+              type="button"
+              (click)="clearForm()"
+              [disabled]="loading"
+              class="h-10 px-4 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition">
+              Limpiar
+            </button>
+
+            <button
+              type="button"
+              (click)="startInstance()"
+              [disabled]="loading"
+              class="h-10 px-5 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed transition">
+              {{ loading ? 'Iniciando...' : 'Iniciar trámite' }}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Result -->
+      <aside class="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden h-fit">
+        <div class="px-5 py-4 border-b border-slate-200 bg-slate-50">
+          <h2 class="text-sm font-black text-slate-800">
+            Resultado
+          </h2>
+
+          <p class="text-xs text-slate-500 mt-1">
+            Información de la instancia creada.
+          </p>
+        </div>
+
+        <div class="p-5">
+          <div
+            *ngIf="!createdInstance"
+            class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center">
+            <div class="text-sm font-bold text-slate-700">
+              Sin trámite iniciado
+            </div>
+
+            <p class="text-xs text-slate-500 mt-1">
+              Cuando inicies un trámite, aquí aparecerá el código de seguimiento.
+            </p>
+          </div>
+
+          <div *ngIf="createdInstance" class="space-y-4">
+            <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+              <div class="text-xs font-semibold text-emerald-600">
+                Código de seguimiento
+              </div>
+
+              <div class="text-2xl font-black text-emerald-700 mt-1">
+                {{ createdInstance.trackingCode }}
+              </div>
+            </div>
+
+            <div class="space-y-2 text-xs text-slate-600">
+              <div class="flex justify-between gap-3">
+                <span class="text-slate-400">Estado</span>
+                <span class="font-bold text-slate-800">
+                  {{ createdInstance.status }}
+                </span>
+              </div>
+
+              <div class="flex justify-between gap-3">
+                <span class="text-slate-400">Instancia</span>
+                <span class="font-medium text-slate-800 break-all text-right">
+                  {{ createdInstance.id }}
+                </span>
+              </div>
+
+              <div class="flex justify-between gap-3">
+                <span class="text-slate-400">Nodo actual</span>
+                <span class="font-medium text-slate-800 break-all text-right">
+                  {{ createdInstance.currentNodeId || '—' }}
+                </span>
+              </div>
+
+              <div class="flex justify-between gap-3">
+                <span class="text-slate-400">Tareas creadas</span>
+                <span class="font-bold text-slate-800">
+                  {{ createdInstance.tasks.length }}
+                </span>
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-200">
+              <div class="text-xs font-bold uppercase tracking-wide text-slate-400 mb-2">
+                Primera tarea
+              </div>
+
+              <div
+                *ngFor="let task of createdInstance.tasks"
+                class="rounded-2xl border border-slate-200 bg-white p-3">
+                <div class="text-sm font-bold text-slate-800">
+                  {{ task.nodeLabel || 'Actividad sin nombre' }}
+                </div>
+
+                <div class="text-xs text-slate-500 mt-1">
+                  Estado: {{ task.status }}
+                </div>
+
+                <div class="text-xs text-slate-500 mt-1 break-all">
+                  Departamento: {{ task.departmentId || 'Sin departamento' }}
+                </div>
+
+                <div class="text-xs text-slate-500 mt-1 break-all">
+                  Formulario: {{ task.formId || 'Sin formulario' }}
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-2 pt-2">
+              <a
+                routerLink="/tasks"
+                class="h-10 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition flex items-center justify-center">
+                Ir a Bandeja
+              </a>
+
+              <a
+                routerLink="/monitor"
+                class="h-10 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 transition flex items-center justify-center">
+                Ver Monitor
+              </a>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>

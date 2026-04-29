@@ -1,0 +1,117 @@
+<div class="h-screen bg-slate-50 flex flex-col font-sans overflow-hidden">
+  <!-- NAVBAR -->
+  <nav
+    class="shrink-0 sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-slate-200 px-8 py-3 flex justify-between items-center shadow-sm">
+    <!-- BRAND -->
+    <div class="flex items-center gap-3">
+      <div
+        class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-700 rounded-xl shadow-lg shadow-blue-500/30 flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      </div>
+
+      <div>
+        <h1 class="text-lg font-black text-slate-800 leading-none tracking-tighter uppercase">
+          Workflow
+        </h1>
+
+        <span class="text-[10px] font-bold text-blue-600 tracking-widest uppercase">
+          Engine v4.0
+        </span>
+      </div>
+    </div>
+
+    <!-- DESKTOP MENU -->
+    <div class="hidden lg:flex gap-1 bg-slate-100 p-1 rounded-2xl">
+      <a *ngIf="isAdmin" routerLink="/dashboard/admin" routerLinkActive="bg-white shadow-sm text-blue-600"
+        class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 transition-all">
+        Usuarios
+      </a>
+
+      <a routerLink="/dashboard/projects" routerLinkActive="bg-white shadow-sm text-blue-600"
+        class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 transition-all">
+        {{ isAdmin ? 'Proyectos' : 'Mis Diagramas' }}
+      </a>
+
+      <a routerLink="/tasks" routerLinkActive="bg-white shadow-sm text-blue-600"
+        class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 transition-all">
+        Bandeja
+      </a>
+
+      <a routerLink="/monitor" routerLinkActive="bg-white shadow-sm text-blue-600"
+        class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 transition-all">
+        Monitor
+      </a>
+
+      <a routerLink="/start-instance" routerLinkActive="bg-white shadow-sm text-blue-600"
+        class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 transition-all">
+        Iniciar trámite
+      </a>
+
+      <a routerLink="/dashboard/profile" routerLinkActive="bg-white shadow-sm text-blue-600"
+        class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 transition-all">
+        Perfil
+      </a>
+    </div>
+
+    <!-- USER / LOGOUT -->
+    <div class="flex items-center gap-6">
+      <div class="hidden md:flex flex-col items-end">
+        <span class="text-sm font-bold text-slate-800">
+          {{ userName }}
+        </span>
+
+        <span class="text-[10px] font-medium text-slate-400 uppercase tracking-tighter italic">
+          Acceso: {{ isAdmin ? 'Administrador' : 'Usuario Estándar' }}
+        </span>
+      </div>
+
+      <button type="button" (click)="handleLogout()"
+        class="group flex items-center gap-2 bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 p-2 md:px-4 md:py-2 rounded-xl text-sm font-bold transition-all border border-transparent hover:border-red-100">
+        <span class="hidden md:inline">
+          Cerrar Sesión
+        </span>
+
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform group-hover:translate-x-1"
+          fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MOBILE MENU -->
+  <div class="lg:hidden shrink-0 bg-white border-b border-slate-200 px-4 py-3">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <a *ngIf="isAdmin" routerLink="/dashboard/admin" routerLinkActive="bg-blue-50 text-blue-700 border-blue-200"
+        class="h-10 rounded-xl border border-slate-200 bg-slate-50 text-xs font-black uppercase tracking-wide text-slate-500 flex items-center justify-center hover:text-blue-600 transition">
+        Usuarios
+      </a>
+
+      <a routerLink="/dashboard/projects" routerLinkActive="bg-blue-50 text-blue-700 border-blue-200"
+        class="h-10 rounded-xl border border-slate-200 bg-slate-50 text-xs font-black uppercase tracking-wide text-slate-500 flex items-center justify-center hover:text-blue-600 transition">
+        {{ isAdmin ? 'Proyectos' : 'Diagramas' }}
+      </a>
+
+      <a routerLink="/tasks" routerLinkActive="bg-blue-50 text-blue-700 border-blue-200"
+        class="h-10 rounded-xl border border-slate-200 bg-slate-50 text-xs font-black uppercase tracking-wide text-slate-500 flex items-center justify-center hover:text-blue-600 transition">
+        Bandeja
+      </a>
+
+      <a routerLink="/dashboard/profile" routerLinkActive="bg-blue-50 text-blue-700 border-blue-200"
+        class="h-10 rounded-xl border border-slate-200 bg-slate-50 text-xs font-black uppercase tracking-wide text-slate-500 flex items-center justify-center hover:text-blue-600 transition">
+        Perfil
+      </a>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <main class="flex-1 min-h-0 overflow-y-auto">
+    <div class="max-w-7xl mx-auto px-6 py-6">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>
