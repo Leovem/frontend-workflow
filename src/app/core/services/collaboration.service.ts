@@ -3,7 +3,7 @@ import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { Subject } from 'rxjs';
 
-import { environment } from '../../../environments/environment';
+import { environment } from '../../../environments/environment.prod';
 
 import {
   CollaborativeDiagramState,

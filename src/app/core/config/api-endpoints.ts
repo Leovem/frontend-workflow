@@ -1,6 +1,6 @@
 // src/app/core/config/api-endpoints.ts
 
-import { environment } from '../../../environments/environment';
+import { environment } from '../../../environments/environment.prod';
 
 export const API_ENDPOINTS = {
   auth: `${environment.api.springBoot}/auth`,
