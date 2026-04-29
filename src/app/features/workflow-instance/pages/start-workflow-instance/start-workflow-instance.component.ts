@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { finalize, timeout } from 'rxjs';
 
 import {
   StartWorkflowInstanceResponse
@@ -44,9 +45,16 @@ export class StartWorkflowInstanceComponent {
   ) {}
 
   startInstance(): void {
+    if (this.loading) {
+      return;
+    }
+
     const processId = this.processId.trim();
     const processVersionId = this.processVersionId.trim();
     const title = this.title.trim();
+
+    this.errorMessage = '';
+    this.successMessage = '';
 
     if (!processId) {
       this.errorMessage = 'Ingresa el processId del proceso.';
@@ -64,8 +72,6 @@ export class StartWorkflowInstanceComponent {
     }
 
     this.loading = true;
-    this.errorMessage = '';
-    this.successMessage = '';
     this.createdInstance = null;
 
     this.workflowInstanceApi.startInstance({
@@ -73,17 +79,26 @@ export class StartWorkflowInstanceComponent {
       processVersionId,
       title,
       initialData: this.buildInitialData()
-    }).subscribe({
+    }).pipe(
+      timeout(30000),
+      finalize(() => {
+        this.loading = false;
+      })
+    ).subscribe({
       next: (response) => {
-        this.createdInstance = response;
-        this.successMessage = `Trámite iniciado correctamente: ${response.trackingCode}`;
+        console.log('Trámite creado desde Angular:', response);
+
+        this.createdInstance = {
+          ...response,
+          tasks: response.tasks ?? []
+        };
+
+        this.successMessage =
+          `Trámite iniciado correctamente: ${response.trackingCode}`;
       },
       error: (error) => {
         console.error('Error al iniciar trámite:', error);
         this.errorMessage = this.extractErrorMessage(error);
-      },
-      complete: () => {
-        this.loading = false;
       }
     });
   }
@@ -91,22 +106,30 @@ export class StartWorkflowInstanceComponent {
   private buildInitialData(): Record<string, unknown> {
     const data: Record<string, unknown> = {};
 
-    if (this.applicantName.trim()) {
-      data['solicitante'] = this.applicantName.trim();
+    const applicantName = this.applicantName.trim();
+    const requestType = this.requestType.trim();
+    const notes = this.notes.trim();
+
+    if (applicantName) {
+      data['solicitante'] = applicantName;
     }
 
-    if (this.requestType.trim()) {
-      data['tipoSolicitud'] = this.requestType.trim();
+    if (requestType) {
+      data['tipoSolicitud'] = requestType;
     }
 
-    if (this.notes.trim()) {
-      data['observacionesIniciales'] = this.notes.trim();
+    if (notes) {
+      data['observacionesIniciales'] = notes;
     }
 
     return data;
   }
 
   clearForm(): void {
+    if (this.loading) {
+      return;
+    }
+
     this.processId = '';
     this.processVersionId = '';
     this.title = '';
@@ -122,23 +145,58 @@ export class StartWorkflowInstanceComponent {
     if (
       typeof error === 'object' &&
       error !== null &&
-      'error' in error
+      'name' in error &&
+      (error as { name?: string }).name === 'TimeoutError'
     ) {
-      const httpError = error as { error?: { message?: string; detail?: string } | string };
+      return 'El servidor tardó demasiado en responder. Intenta nuevamente en unos segundos.';
+    }
 
-      if (typeof httpError.error === 'string') {
-        return httpError.error;
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'status' in error
+    ) {
+      const httpError = error as {
+        status?: number;
+        error?: {
+          message?: string;
+          detail?: string;
+          error?: string;
+        } | string;
+        message?: string;
+      };
+
+      if (httpError.status === 0) {
+        return 'No se pudo conectar con el backend. Verifica que el servicio esté activo.';
       }
 
-      if (httpError.error?.message) {
-        return httpError.error.message;
+      if (httpError.status === 401 || httpError.status === 403) {
+        return 'No tienes autorización para iniciar este trámite.';
       }
 
-      if (httpError.error?.detail) {
-        return httpError.error.detail;
+      if (httpError.status === 400 || httpError.status === 500) {
+        if (typeof httpError.error === 'string') {
+          return httpError.error;
+        }
+
+        if (httpError.error?.detail) {
+          return httpError.error.detail;
+        }
+
+        if (httpError.error?.message) {
+          return httpError.error.message;
+        }
+
+        if (httpError.error?.error) {
+          return httpError.error.error;
+        }
+      }
+
+      if (httpError.message) {
+        return httpError.message;
       }
     }
 
-    return 'No se pudo iniciar el trámite. Verifica que la versión esté publicada.';
+    return 'No se pudo iniciar el trámite. Verifica que la versión esté publicada y que el diagrama tenga nodo inicial.';
   }
 }

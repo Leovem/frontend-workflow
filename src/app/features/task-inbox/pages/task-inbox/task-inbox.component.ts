@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { switchMap } from 'rxjs';
+import { finalize, switchMap } from 'rxjs';
 
 import { WorkflowTask } from '../../../process-editor/models/workflow-task.model';
 import { WorkflowFormDefinition } from '../../../process-editor/models/workflow-form.model';
@@ -86,16 +86,18 @@ export class TaskInboxComponent implements OnInit {
         this.errorMessage = '';
         this.successMessage = '';
 
-        this.workflowTaskApi.findByDepartment(departmentId).subscribe({
+        this.workflowTaskApi.findByDepartment(departmentId).pipe(
+            finalize(() => {
+                this.loading = false;
+            })
+        ).subscribe({
             next: (tasks) => {
-                this.tasks = tasks;
+                console.log('Tareas cargadas:', tasks);
+                this.tasks = tasks ?? [];
             },
             error: (error) => {
                 console.error('Error al cargar tareas:', error);
                 this.errorMessage = 'No se pudieron cargar las tareas del departamento.';
-            },
-            complete: () => {
-                this.loading = false;
             }
         });
     }
@@ -116,7 +118,11 @@ export class TaskInboxComponent implements OnInit {
         this.errorMessage = '';
         this.successMessage = '';
 
-        this.workflowTaskApi.claimTask(task.id, userId).subscribe({
+        this.workflowTaskApi.claimTask(task.id, userId).pipe(
+            finalize(() => {
+                this.claimingTaskId = null;
+            })
+        ).subscribe({
             next: (updatedTask) => {
                 this.tasks = this.tasks.map(current =>
                     current.id === updatedTask.id ? updatedTask : current
@@ -127,9 +133,6 @@ export class TaskInboxComponent implements OnInit {
             error: (error) => {
                 console.error('Error al tomar tarea:', error);
                 this.errorMessage = 'No se pudo tomar la tarea.';
-            },
-            complete: () => {
-                this.claimingTaskId = null;
             }
         });
     }
@@ -288,6 +291,51 @@ export class TaskInboxComponent implements OnInit {
     }
 
     saveSubmissionAndCompleteTask(): void {
+  if (!this.selectedTask) {
+    return;
+  }
+
+  const userId = this.userId.trim();
+
+  if (!userId) {
+    this.errorMessage = 'Ingresa un userId para completar la tarea.';
+    return;
+  }
+
+  this.taskFormSaving = true;
+  this.completingTaskId = this.selectedTask.id;
+  this.errorMessage = '';
+  this.successMessage = '';
+
+  this.submissionApi.saveSubmission({
+    taskId: this.selectedTask.id,
+    userId,
+    values: this.taskFormValues
+  }).pipe(
+    switchMap(() =>
+      this.workflowTaskApi.completeTask(
+        this.selectedTask!.id,
+        userId
+      )
+    ),
+    finalize(() => {
+      this.taskFormSaving = false;
+      this.completingTaskId = null;
+    })
+  ).subscribe({
+    next: () => {
+      this.successMessage = 'Respuesta guardada y tarea completada correctamente.';
+      this.closeTaskFormPanel();
+      this.loadTasks();
+    },
+    error: (error) => {
+      console.error('Error al guardar/completar tarea:', error);
+      this.errorMessage = 'No se pudo completar la tarea. Verifica que la tarea siga en proceso.';
+    }
+  });
+}
+
+    saveTaskFormSubmission(): void {
         if (!this.selectedTask) {
             return;
         }
@@ -295,12 +343,11 @@ export class TaskInboxComponent implements OnInit {
         const userId = this.userId.trim();
 
         if (!userId) {
-            this.errorMessage = 'Ingresa un userId para completar la tarea.';
+            this.errorMessage = 'Ingresa un userId para guardar la respuesta.';
             return;
         }
 
         this.taskFormSaving = true;
-        this.completingTaskId = this.selectedTask.id;
         this.errorMessage = '';
         this.successMessage = '';
 
@@ -309,64 +356,18 @@ export class TaskInboxComponent implements OnInit {
             userId,
             values: this.taskFormValues
         }).pipe(
-            switchMap(() => {
-                return this.workflowTaskApi.completeTask(
-                    this.selectedTask!.id,
-                    userId
-                );
+            finalize(() => {
+                this.taskFormSaving = false;
             })
         ).subscribe({
             next: () => {
-                this.successMessage = 'Respuesta guardada y tarea completada correctamente.';
-
-                this.closeTaskFormPanel();
+                this.successMessage = 'Respuesta del formulario guardada correctamente.';
                 this.loadTasks();
             },
             error: (error) => {
-                console.error('Error al guardar/completar tarea:', error);
-
-                this.errorMessage =
-                    'No se pudo completar la tarea. Verifica que la respuesta sea válida y que la tarea siga en proceso.';
-            },
-            complete: () => {
-                this.taskFormSaving = false;
-                this.completingTaskId = null;
+                console.error('Error al guardar respuesta:', error);
+                this.errorMessage = 'No se pudo guardar la respuesta del formulario.';
             }
         });
     }
-
-    saveTaskFormSubmission(): void {
-  if (!this.selectedTask) {
-    return;
-  }
-
-  const userId = this.userId.trim();
-
-  if (!userId) {
-    this.errorMessage = 'Ingresa un userId para guardar la respuesta.';
-    return;
-  }
-
-  this.taskFormSaving = true;
-  this.errorMessage = '';
-  this.successMessage = '';
-
-  this.submissionApi.saveSubmission({
-    taskId: this.selectedTask.id,
-    userId,
-    values: this.taskFormValues
-  }).subscribe({
-    next: () => {
-      this.successMessage = 'Respuesta del formulario guardada correctamente.';
-      this.loadTasks();
-    },
-    error: (error) => {
-      console.error('Error al guardar respuesta:', error);
-      this.errorMessage = 'No se pudo guardar la respuesta del formulario.';
-    },
-    complete: () => {
-      this.taskFormSaving = false;
-    }
-  });
-}
 }
