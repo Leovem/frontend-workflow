@@ -46,7 +46,10 @@ import { WorkflowFormApiService } from '../../core/services/workflow-form-api.se
 import { AIGeneratedWorkflowForm, SaveWorkflowFormRequest, WorkflowFormDefinition } from './models/workflow-form.model';
 import { WorkflowProcessApiService } from '../../core/services/workflow-process-api.service';
 import { WorkflowProcessEditorResponse } from './models/workflow-process.model';
-
+import {
+  DepartmentConfig,
+  createDefaultDepartmentConfig
+} from './models/department-config.model';
 
 
 
@@ -1130,28 +1133,115 @@ export class ProcessEditorComponent implements AfterViewInit, OnDestroy {
     this.runValidation();
   }
 
-  updateSelectedNodeLabel(value: string): void {
-    if (!this.selectedNode) return;
-
-    const nodeType = this.selectedNode.get('nodeType');
-
-    if (nodeType === 'link' && this.selectedNode instanceof joint.dia.Link) {
-      this.selectedNode.label(0, {
-        attrs: {
-          labelText: { text: value }
-        }
-      });
-    } else {
-      this.selectedNode.attr('label/text', value);
-      this.selectedNode.attr('text/text', value);
+  updateSelectedLaneName(value: string): void {
+    if (!this.selectedNode || !this.selectedNode.isElement()) {
+      return;
     }
+
+    if (this.selectedNode.get(JOINT_META.IS_LANE) !== true) {
+      return;
+    }
+
+    const name = value.trim() || 'Departamento';
+
+    this.selectedNode.attr('label/text', name);
+    this.selectedNode.attr('text/text', name);
+
+    const currentDepartmentConfig =
+      this.selectedNode.get(JOINT_META.DEPARTMENT_CONFIG) as
+      | DepartmentConfig
+      | undefined;
+
+    const shouldRegenerateDepartmentId =
+      !currentDepartmentConfig ||
+      currentDepartmentConfig.departmentId.startsWith('dep_nuevo_departamento') ||
+      currentDepartmentConfig.departmentId.startsWith('dep_departamento');
+
+    const nextDepartmentConfig: DepartmentConfig = shouldRegenerateDepartmentId
+      ? createDefaultDepartmentConfig(name)
+      : {
+        ...currentDepartmentConfig,
+        name
+      };
+
+    this.selectedNode.set(
+      JOINT_META.DEPARTMENT_CONFIG,
+      nextDepartmentConfig
+    );
+
+    this.syncLaneDepartmentToChildren(this.selectedNode);
 
     this.lastSaved = `Modificado: ${new Date().toLocaleTimeString()}`;
     this.runValidation();
   }
 
-  updateSelectedLaneName(value: string): void {
-    if (!this.selectedNode) return;
+  private syncLaneDepartmentToChildren(lane: joint.dia.Element): void {
+    const departmentConfig = lane.get(
+      JOINT_META.DEPARTMENT_CONFIG
+    ) as DepartmentConfig | undefined;
+
+    if (!departmentConfig) {
+      return;
+    }
+
+    for (const cell of lane.getEmbeddedCells()) {
+      if (!cell.isElement()) {
+        continue;
+      }
+
+      if (cell.get(JOINT_META.NODE_TYPE) !== 'action') {
+        continue;
+      }
+
+      const businessConfig = cell.get(
+        JOINT_META.BUSINESS_CONFIG
+      ) as NodeBusinessConfig | undefined;
+
+      if (!businessConfig) {
+        continue;
+      }
+
+      cell.set(JOINT_META.BUSINESS_CONFIG, {
+        ...businessConfig,
+        assignment: {
+          ...businessConfig.assignment,
+          targetType: businessConfig.assignment?.targetType ?? 'DEPARTMENT',
+          departmentId: departmentConfig.departmentId,
+          departmentName: departmentConfig.name,
+          roleId:
+            businessConfig.assignment?.roleId ??
+            departmentConfig.defaultRoleId
+        }
+      });
+    }
+  }
+
+  updateSelectedNodeLabel(value: string): void {
+    if (!this.selectedNode) {
+      return;
+    }
+
+    const nodeType = this.selectedNode.get(JOINT_META.NODE_TYPE);
+
+    if (nodeType === 'link') {
+      const link = this.selectedNode as joint.dia.Link;
+
+      link.label(0, {
+        attrs: {
+          labelText: {
+            text: value
+          }
+        }
+      });
+
+      this.lastSaved = `Modificado: ${new Date().toLocaleTimeString()}`;
+      this.runValidation();
+      return;
+    }
+
+    if (!this.selectedNode.isElement()) {
+      return;
+    }
 
     this.selectedNode.attr('label/text', value);
     this.selectedNode.attr('text/text', value);
@@ -1226,54 +1316,54 @@ export class ProcessEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   publishCurrentVersion(): void {
-  this.runValidation();
+    this.runValidation();
 
-  if (this.validationErrorCount > 0) {
-    this.showValidationPanel = true;
-
-    this.pushAiAssistantMessage(
-      'No se puede publicar el proceso porque tiene errores de validación.'
-    );
-
-    return;
-  }
-
-  this.ensureDraftProcess().pipe(
-    switchMap((processData) => {
-      const serialized = this.persistenceService.save(this.canvasService.getGraph());
-      const graphJson = JSON.parse(serialized);
-
-      return this.workflowProcessApi.saveDraftVersion(
-        processData.processVersionId,
-        { graphJson }
-      ).pipe(
-        switchMap(() =>
-          this.workflowProcessApi.publishVersion(processData.processVersionId)
-        )
-      );
-    }),
-    catchError((error: unknown) => {
-      console.error('Error al publicar versión:', error);
+    if (this.validationErrorCount > 0) {
+      this.showValidationPanel = true;
 
       this.pushAiAssistantMessage(
-        'No se pudo publicar la versión del proceso.'
+        'No se puede publicar el proceso porque tiene errores de validación.'
       );
 
-      return of(null);
-    })
-  ).subscribe((publishedVersion) => {
-    if (!publishedVersion) {
       return;
     }
 
-    this.versionStatus = publishedVersion.status;
-    this.lastSaved = `Publicado: ${new Date().toLocaleTimeString()}`;
+    this.ensureDraftProcess().pipe(
+      switchMap((processData) => {
+        const serialized = this.persistenceService.save(this.canvasService.getGraph());
+        const graphJson = JSON.parse(serialized);
 
-    this.pushAiAssistantMessage(
-      `La versión ${publishedVersion.versionNumber} fue publicada correctamente.`
-    );
-  });
-}
+        return this.workflowProcessApi.saveDraftVersion(
+          processData.processVersionId,
+          { graphJson }
+        ).pipe(
+          switchMap(() =>
+            this.workflowProcessApi.publishVersion(processData.processVersionId)
+          )
+        );
+      }),
+      catchError((error: unknown) => {
+        console.error('Error al publicar versión:', error);
+
+        this.pushAiAssistantMessage(
+          'No se pudo publicar la versión del proceso.'
+        );
+
+        return of(null);
+      })
+    ).subscribe((publishedVersion) => {
+      if (!publishedVersion) {
+        return;
+      }
+
+      this.versionStatus = publishedVersion.status;
+      this.lastSaved = `Publicado: ${new Date().toLocaleTimeString()}`;
+
+      this.pushAiAssistantMessage(
+        `La versión ${publishedVersion.versionNumber} fue publicada correctamente.`
+      );
+    });
+  }
 
   openFormPreview(formId: string): void {
     this.formPreviewLoading = true;

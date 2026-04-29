@@ -1,8 +1,13 @@
 import { Injectable } from '@angular/core';
 import * as joint from '@joint/core';
+
 import { NodeFactoryService } from './node-factory.service';
 import { JOINT_META } from '../utils/joint-metadata';
-import { createDefaultDepartmentConfig } from '../models/department-config.model';
+import {
+  DepartmentConfig,
+  createDefaultDepartmentConfig
+} from '../models/department-config.model';
+import { NodeBusinessConfig } from '../models/node-business-config.model';
 
 @Injectable({
   providedIn: 'root'
@@ -14,7 +19,11 @@ export class LaneManagerService {
 
   constructor(private readonly nodeFactory: NodeFactoryService) {}
 
-  addLane(graph: joint.dia.Graph, name: string, index?: number): joint.dia.Element {
+  addLane(
+    graph: joint.dia.Graph,
+    name: string,
+    index?: number
+  ): joint.dia.Element {
     const lanes = this.getLanes(graph);
     const laneIndex = index ?? lanes.length;
     const y = laneIndex * this.laneHeight;
@@ -39,34 +48,56 @@ export class LaneManagerService {
   }
 
   getLanes(graph: joint.dia.Graph): joint.dia.Element[] {
-    return graph.getElements().filter(cell => cell.get(JOINT_META.IS_LANE) === true);
+    return graph
+      .getElements()
+      .filter(cell => cell.get(JOINT_META.IS_LANE) === true);
   }
 
-  getLaneAtPoint(graph: joint.dia.Graph, x: number, y: number): joint.dia.Element | null {
+  getLaneAtPoint(
+    graph: joint.dia.Graph,
+    x: number,
+    y: number
+  ): joint.dia.Element | null {
     const models = graph.findModelsFromPoint({ x, y });
-    return models.find(model => model.get(JOINT_META.IS_LANE) === true) ?? null;
+
+    return (
+      models.find(model => model.get(JOINT_META.IS_LANE) === true) ?? null
+    );
   }
 
-  embedNodeInLane(node: joint.dia.Element, lane: joint.dia.Element): void {
+  embedNodeInLane(
+    node: joint.dia.Element,
+    lane: joint.dia.Element
+  ): void {
     lane.embed(node);
     node.set(JOINT_META.LANE_ID, lane.id);
 
-    const departmentConfig = lane.get(JOINT_META.DEPARTMENT_CONFIG);
-
-    if (departmentConfig && !node.get(JOINT_META.IS_LANE)) {
-      const businessConfig = node.get(JOINT_META.BUSINESS_CONFIG);
-
-      if (businessConfig?.assignment) {
-        node.set(JOINT_META.BUSINESS_CONFIG, {
-          ...businessConfig,
-          assignment: {
-            ...businessConfig.assignment,
-            departmentId: departmentConfig.departmentId,
-            targetType: businessConfig.assignment.targetType ?? 'DEPARTMENT'
-          }
-        });
-      }
+    if (node.get(JOINT_META.NODE_TYPE) !== 'action') {
+      return;
     }
+
+    const departmentConfig = this.getDepartmentConfigFromLane(lane);
+
+    const businessConfig = node.get(
+      JOINT_META.BUSINESS_CONFIG
+    ) as NodeBusinessConfig | undefined;
+
+    if (!businessConfig) {
+      return;
+    }
+
+    node.set(JOINT_META.BUSINESS_CONFIG, {
+      ...businessConfig,
+      assignment: {
+        ...businessConfig.assignment,
+        targetType: businessConfig.assignment?.targetType ?? 'DEPARTMENT',
+        departmentId: departmentConfig.departmentId,
+        departmentName: departmentConfig.name,
+        roleId:
+          businessConfig.assignment?.roleId ??
+          departmentConfig.defaultRoleId
+      }
+    });
   }
 
   reflowLanes(graph: joint.dia.Graph): void {
@@ -76,13 +107,17 @@ export class LaneManagerService {
       .sort((a, b) => a.position().y - b.position().y)
       .forEach((lane, index) => {
         const currentSize = lane.size();
+
         lane.position(this.laneStartX, index * this.laneHeight);
         lane.resize(currentSize.width, this.laneHeight);
       });
   }
 
   getCanvasHeight(graph: joint.dia.Graph): number {
-    return Math.max(this.getLanes(graph).length * this.laneHeight, 1000);
+    return Math.max(
+      this.getLanes(graph).length * this.laneHeight,
+      1000
+    );
   }
 
   getCanvasWidth(graph: joint.dia.Graph): number {
@@ -93,5 +128,28 @@ export class LaneManagerService {
       : this.laneInitialWidth;
 
     return maxLaneWidth + 400;
+  }
+
+  private getDepartmentConfigFromLane(
+    lane: joint.dia.Element
+  ): DepartmentConfig {
+    const existing = lane.get(
+      JOINT_META.DEPARTMENT_CONFIG
+    ) as DepartmentConfig | undefined;
+
+    if (existing?.departmentId && existing?.name) {
+      return existing;
+    }
+
+    const fallbackName =
+      lane.attr('label/text') ??
+      lane.attr('text/text') ??
+      'Departamento';
+
+    const departmentConfig = createDefaultDepartmentConfig(fallbackName);
+
+    lane.set(JOINT_META.DEPARTMENT_CONFIG, departmentConfig);
+
+    return departmentConfig;
   }
 }
